@@ -1,0 +1,4 @@
+# Lotes pequenos: no Windows a linha de comando (caminhos absolutos + npx) estoura ~8191 caracteres.
+npx lint-staged --max-arg-length 3000
+npm run typecheck
+npm test

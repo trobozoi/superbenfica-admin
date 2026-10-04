@@ -1,0 +1,23 @@
+# Desenvolvimento: docker compose up --build  ->  http://localhost:3000
+# A API Django roda fora do container (python manage.py runserver na porta 8000).
+
+services:
+  admin:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "3000:3000"
+    environment:
+      # O servidor Next (dentro do container) acessa a API na máquina host.
+      API_URL: ${DOCKER_API_URL:-http://host.docker.internal:8000}
+      # O navegador (fora do container) acessa o WebSocket direto no host.
+      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://127.0.0.1:8000}
+      NEXT_PUBLIC_APP_ENV: development
+      WATCHPACK_POLLING: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
