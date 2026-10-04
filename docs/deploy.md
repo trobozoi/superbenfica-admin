@@ -76,4 +76,10 @@ O painel depende de configurações do backend:
 
 ## Atualizar a versão
 
-A versão fica em `package.json` (`version`) e em `sonar-project.properties` (`sonar.projectVersion`). Atualize as duas juntas.
+O projeto usa [Versionamento Semântico](https://semver.org/lang/pt-BR/): `MAIOR.MENOR.CORREÇÃO`.
+
+1. `npm version <nova> --no-git-tag-version`, que atualiza o `package.json` e o `package-lock.json`.
+2. Atualize `sonar.projectVersion` em `sonar-project.properties`.
+3. Registre as mudanças no [CHANGELOG.md](../CHANGELOG.md).
+4. Commite e crie a tag: `git tag -a v<nova> -m "v<nova>"`.
+5. Envie o commit e a tag: `git push origin main --follow-tags`.
