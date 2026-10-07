@@ -59,6 +59,7 @@ export const OPERATIONAL_STATUSES = [
   "PENDENTE",
   "EM_SEPARACAO",
   "SEPARADO",
+  "SAIU_PARA_ENTREGA",
 ] as const satisfies readonly PedidoStatus[];
 
 /**

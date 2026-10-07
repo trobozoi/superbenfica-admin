@@ -4,6 +4,7 @@ import {
   EnderecoSaveError,
   enderecoPrincipal,
   enderecoToForm,
+  formatarEndereco,
   salvarCliente,
 } from "@/features/clientes/service";
 import { clientesApi, enderecosApi } from "@/services/api";
@@ -110,5 +111,25 @@ describe("features/clientes", () => {
     }).catch((caught: unknown) => caught);
     expect(error).toBeInstanceOf(EnderecoSaveError);
     expect(error).toMatchObject({ cliente, original: apiError });
+  });
+
+  it("formata o endereço como a API copia para o pedido", () => {
+    const endereco: EnderecoCliente = {
+      id: 1,
+      cliente: 1,
+      endereco: "Rua São José",
+      numero: "100",
+      complemento: "Apto 2",
+      bairro: "Centro",
+      cidade: "Fortaleza",
+      estado: "CE",
+      cep: "60060-170",
+    };
+    expect(formatarEndereco(endereco)).toBe(
+      "Rua São José, 100 (Apto 2) - Centro, Fortaleza/CE - CEP 60060-170",
+    );
+    expect(formatarEndereco({ ...endereco, complemento: "" })).toBe(
+      "Rua São José, 100 - Centro, Fortaleza/CE - CEP 60060-170",
+    );
   });
 });

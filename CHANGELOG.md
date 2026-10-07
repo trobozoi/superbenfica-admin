@@ -2,6 +2,21 @@
 
 Todas as mudanças relevantes do painel são registradas aqui. O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/), e o projeto usa [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [Não lançado]
+
+### Adicionado
+
+- **Forma de entrega dos pedidos** (requer a API com o campo `tipo_entrega`, migração `pedidos.0005`):
+  - coluna "Entrega" e filtro por retirada na loja ou entrega em domicílio na lista de pedidos;
+  - forma de entrega e endereço de entrega no detalhe do pedido;
+  - selo e endereço nos cartões da fila de separação quando o pedido é para entrega;
+  - no novo pedido, escolha entre retirada e entrega em domicílio; na entrega, o endereço é escolhido entre os cadastrados do cliente (o principal vem selecionado).
+- **Status "Saiu para entrega"** (requer a API com o status `SAIU_PARA_ENTREGA`, migração `pedidos.0006`): pedidos de entrega em domicílio separados ganham o botão "Saiu para entrega" e só são finalizados depois dele; a retirada na loja continua sendo finalizada direto. O status entra no filtro, no gráfico e nos pedidos em aberto, e o dashboard operacional ganha o cartão "Saíram para entrega".
+
+### Corrigido
+
+- ADMIN em "Todas as filiais" não recebia atualizações em tempo real: pedidos novos só apareciam ao recarregar a página. Agora o painel escuta o canal de cada filial ativa.
+
 ## [1.0.0] - 2026-10-03
 
 Primeira versão estável do painel administrativo.

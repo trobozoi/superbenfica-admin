@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardList, PackageCheck, Timer } from "lucide-react";
+import { ClipboardList, PackageCheck, Timer, Truck } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,11 @@ const CARD_CONFIG = {
   PENDENTE: { labelKey: "aguardandoSeparacao", icon: Timer, href: "/separacao" },
   EM_SEPARACAO: { labelKey: "emSeparacao", icon: ClipboardList, href: "/separacao" },
   SEPARADO: { labelKey: "prontosParaCaixa", icon: PackageCheck, href: "/pedidos?status=SEPARADO" },
+  SAIU_PARA_ENTREGA: {
+    labelKey: "saiuParaEntrega",
+    icon: Truck,
+    href: "/pedidos?status=SAIU_PARA_ENTREGA",
+  },
 } as const;
 
 /** Visão de separadores e caixas: o que está na fila agora. */
@@ -20,7 +25,10 @@ export function OperationalDashboard() {
   const counts = useOperationalCounts();
 
   return (
-    <section aria-label={t("operationalTitle")} className="grid gap-4 sm:grid-cols-3">
+    <section
+      aria-label={t("operationalTitle")}
+      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+    >
       {OPERATIONAL_STATUSES.map((status, index) => {
         const { labelKey, icon, href } = CARD_CONFIG[status];
         const query = counts[index];

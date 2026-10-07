@@ -20,6 +20,8 @@ function runAction({ action, pedido }: PedidoActionVariables): Promise<unknown> 
       if (!separacao) return Promise.reject(new Error("Nenhuma separação em andamento."));
       return separacoesApi.concluir(separacao.id);
     }
+    case "despachar":
+      return pedidosApi.despachar(pedido.id);
     case "finalizar":
       return pedidosApi.finalizar(pedido.id);
     case "cancelar":

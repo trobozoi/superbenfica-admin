@@ -4,7 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ErrorState } from "@/components/shared/feedback";
-import { PedidoStatusBadge, SeparacaoStatusBadge } from "@/components/shared/status-badge";
+import {
+  PedidoStatusBadge,
+  SeparacaoStatusBadge,
+  TipoEntregaBadge,
+} from "@/components/shared/status-badge";
 import {
   Dialog,
   DialogContent,
@@ -64,6 +68,18 @@ export function PedidoDetailDialog({ pedidoId, onClose }: Readonly<PedidoDetailD
             <dt className="text-muted-foreground">{t("pedidos.criadoEm")}</dt>
             <dd>{formatDateTime(pedido.data_criacao)}</dd>
           </div>
+          <div>
+            <dt className="text-muted-foreground">{t("pedidos.entrega")}</dt>
+            <dd>
+              <TipoEntregaBadge tipo={pedido.tipo_entrega} />
+            </dd>
+          </div>
+          {pedido.tipo_entrega === "DOMICILIO" && (
+            <div className="col-span-2">
+              <dt className="text-muted-foreground">{t("pedidos.enderecoEntrega")}</dt>
+              <dd className="font-medium">{pedido.endereco_entrega}</dd>
+            </div>
+          )}
         </dl>
 
         <div>

@@ -12,10 +12,17 @@ describe("features/dashboard/summary", () => {
     expect(resumirVendas(undefined)).toEqual({ faturamento: 0, pedidos: 0, ticketMedio: 0 });
   });
 
-  const porStatus = { PENDENTE: 2, EM_SEPARACAO: 1, SEPARADO: 3, FINALIZADO: 9, CANCELADO: 1 };
+  const porStatus = {
+    PENDENTE: 2,
+    EM_SEPARACAO: 1,
+    SEPARADO: 3,
+    SAIU_PARA_ENTREGA: 2,
+    FINALIZADO: 9,
+    CANCELADO: 1,
+  };
 
   it("conta pedidos em aberto", () => {
-    expect(pedidosEmAberto(porStatus)).toBe(6);
+    expect(pedidosEmAberto(porStatus)).toBe(8);
     expect(pedidosEmAberto(undefined)).toBe(0);
   });
 
@@ -24,6 +31,7 @@ describe("features/dashboard/summary", () => {
       "pendente",
       "em_separacao",
       "separado",
+      "saiu_para_entrega",
       "finalizado",
       "cancelado",
     ]);

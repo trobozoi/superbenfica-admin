@@ -1,9 +1,10 @@
 "use client";
 
-import { Clock } from "lucide-react";
+import { Clock, MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { EmptyState, ErrorState } from "@/components/shared/feedback";
 import { PageHeader } from "@/components/shared/page-header";
+import { TipoEntregaBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,6 +33,7 @@ function ItensPedido({ pedido }: Readonly<{ pedido: Pedido }>) {
 
 function PedidoCard({ pedido }: Readonly<{ pedido: Pedido }>) {
   const t = useTranslations("separacao");
+  const tPedidos = useTranslations("pedidos");
   const user = useAuthStore((state) => state.user);
   const separacao = separacaoEmAndamento(pedido);
   const faltamItens = concluirBloqueado(pedido);
@@ -45,8 +47,22 @@ function PedidoCard({ pedido }: Readonly<{ pedido: Pedido }>) {
               <p className="font-mono text-sm font-semibold">{pedido.codigo}</p>
               <p className="text-sm text-muted-foreground">{pedido.cliente_nome}</p>
             </div>
-            <Badge variant="outline">{t("itens", { count: totalItens })}</Badge>
+            <div className="flex flex-col items-end gap-1">
+              <Badge variant="outline">{t("itens", { count: totalItens })}</Badge>
+              {pedido.tipo_entrega === "DOMICILIO" && (
+                <TipoEntregaBadge tipo={pedido.tipo_entrega} />
+              )}
+            </div>
           </div>
+          {pedido.tipo_entrega === "DOMICILIO" && (
+            <p className="flex items-start gap-1 text-xs">
+              <MapPin className="mt-0.5 size-3 shrink-0 text-muted-foreground" aria-hidden />
+              <span>
+                <span className="sr-only">{tPedidos("enderecoEntrega")}: </span>
+                {pedido.endereco_entrega}
+              </span>
+            </p>
+          )}
           {separacao ? (
             <SeparacaoChecklist
               pedido={pedido}

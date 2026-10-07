@@ -2,12 +2,13 @@
 
 import { useTranslations } from "next-intl";
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
-import type { PedidoStatus, SeparacaoStatus } from "@/types/api";
+import type { PedidoStatus, SeparacaoStatus, TipoEntrega } from "@/types/api";
 
 export const PEDIDO_STATUS_VARIANT: Record<PedidoStatus, BadgeVariant> = {
   PENDENTE: "warning",
   EM_SEPARACAO: "info",
   SEPARADO: "default",
+  SAIU_PARA_ENTREGA: "info",
   FINALIZADO: "success",
   CANCELADO: "secondary",
 };
@@ -21,6 +22,12 @@ const SEPARACAO_STATUS_VARIANT: Record<SeparacaoStatus, BadgeVariant> = {
 export function PedidoStatusBadge({ status }: Readonly<{ status: PedidoStatus }>) {
   const t = useTranslations("pedidoStatus");
   return <Badge variant={PEDIDO_STATUS_VARIANT[status]}>{t(status)}</Badge>;
+}
+
+/** Entrega em domicílio em destaque: muda o que a equipe faz com o pedido separado. */
+export function TipoEntregaBadge({ tipo }: Readonly<{ tipo: TipoEntrega }>) {
+  const t = useTranslations("tipoEntrega");
+  return <Badge variant={tipo === "DOMICILIO" ? "info" : "outline"}>{t(tipo)}</Badge>;
 }
 
 export function SeparacaoStatusBadge({ status }: Readonly<{ status: SeparacaoStatus }>) {

@@ -19,7 +19,12 @@ export function resumirVendas(vendas: readonly VendasLoja[] | undefined): Vendas
   return { faturamento, pedidos, ticketMedio: pedidos > 0 ? faturamento / pedidos : 0 };
 }
 
-const EM_ABERTO: readonly PedidoStatus[] = ["PENDENTE", "EM_SEPARACAO", "SEPARADO"];
+const EM_ABERTO: readonly PedidoStatus[] = [
+  "PENDENTE",
+  "EM_SEPARACAO",
+  "SEPARADO",
+  "SAIU_PARA_ENTREGA",
+];
 
 export function pedidosEmAberto(porStatus: PedidosPorStatus | undefined): number {
   if (!porStatus) return 0;

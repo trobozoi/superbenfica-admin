@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { availableActions, canTransition, separacaoEmAndamento } from "@/features/pedidos/actions";
+import {
+  availableActions,
+  canTransition,
+  pedidoPodeMudarPara,
+  separacaoEmAndamento,
+} from "@/features/pedidos/actions";
 import type { Separacao } from "@/types/api";
 
 const emAndamento: Separacao = {
@@ -21,29 +26,63 @@ describe("features/pedidos/actions", () => {
   });
 
   it("separador inicia e conclui separações, mas não finaliza", () => {
-    expect(availableActions({ status: "PENDENTE", separacoes: [] }, "SEPARADOR")).toEqual([
-      "iniciarSeparacao",
-      "cancelar",
-    ]);
     expect(
-      availableActions({ status: "EM_SEPARACAO", separacoes: [emAndamento] }, "SEPARADOR"),
+      availableActions(
+        { status: "PENDENTE", tipo_entrega: "RETIRADA", separacoes: [] },
+        "SEPARADOR",
+      ),
+    ).toEqual(["iniciarSeparacao", "cancelar"]);
+    expect(
+      availableActions(
+        { status: "EM_SEPARACAO", tipo_entrega: "RETIRADA", separacoes: [emAndamento] },
+        "SEPARADOR",
+      ),
     ).toEqual(["concluirSeparacao", "cancelar"]);
-    expect(availableActions({ status: "SEPARADO", separacoes: [] }, "SEPARADOR")).toEqual([
-      "cancelar",
-    ]);
+    expect(
+      availableActions(
+        { status: "SEPARADO", tipo_entrega: "RETIRADA", separacoes: [] },
+        "SEPARADOR",
+      ),
+    ).toEqual(["cancelar"]);
   });
 
   it("caixa finaliza pedidos separados", () => {
-    expect(availableActions({ status: "SEPARADO", separacoes: [] }, "CAIXA")).toEqual([
+    expect(
+      availableActions({ status: "SEPARADO", tipo_entrega: "RETIRADA", separacoes: [] }, "CAIXA"),
+    ).toEqual(["finalizar", "cancelar"]);
+    expect(
+      availableActions({ status: "PENDENTE", tipo_entrega: "RETIRADA", separacoes: [] }, "CAIXA"),
+    ).toEqual(["cancelar"]);
+  });
+
+  it("entrega em domicílio sai para entrega antes de ser finalizada", () => {
+    const domicilio = { tipo_entrega: "DOMICILIO" as const, separacoes: [] };
+    expect(availableActions({ ...domicilio, status: "SEPARADO" }, "CAIXA")).toEqual([
+      "despachar",
+      "cancelar",
+    ]);
+    expect(availableActions({ ...domicilio, status: "SAIU_PARA_ENTREGA" }, "CAIXA")).toEqual([
       "finalizar",
       "cancelar",
     ]);
-    expect(availableActions({ status: "PENDENTE", separacoes: [] }, "CAIXA")).toEqual(["cancelar"]);
+    expect(availableActions({ ...domicilio, status: "SAIU_PARA_ENTREGA" }, "SEPARADOR")).toEqual([
+      "cancelar",
+    ]);
+    expect(
+      pedidoPodeMudarPara({ status: "SEPARADO", tipo_entrega: "RETIRADA" }, "SAIU_PARA_ENTREGA"),
+    ).toBe(false);
+    expect(
+      pedidoPodeMudarPara({ status: "SEPARADO", tipo_entrega: "DOMICILIO" }, "FINALIZADO"),
+    ).toBe(false);
   });
 
   it("sem ações em pedidos encerrados ou para perfis sem acesso", () => {
-    expect(availableActions({ status: "FINALIZADO", separacoes: [] }, "ADMIN")).toEqual([]);
-    expect(availableActions({ status: "PENDENTE", separacoes: [] }, "CLIENTE")).toEqual([]);
+    expect(
+      availableActions({ status: "FINALIZADO", tipo_entrega: "RETIRADA", separacoes: [] }, "ADMIN"),
+    ).toEqual([]);
+    expect(
+      availableActions({ status: "PENDENTE", tipo_entrega: "RETIRADA", separacoes: [] }, "CLIENTE"),
+    ).toEqual([]);
   });
 
   it("localiza a separação em andamento", () => {

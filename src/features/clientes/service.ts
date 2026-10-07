@@ -21,6 +21,12 @@ export function enderecoPrincipal(cliente?: Cliente | null): EnderecoCliente | u
   return cliente?.enderecos.find((e) => e.principal) ?? cliente?.enderecos[0];
 }
 
+/** Endereço em uma linha, no formato que a API copia para o pedido. */
+export function formatarEndereco(e: EnderecoCliente): string {
+  const complemento = e.complemento ? ` (${e.complemento})` : "";
+  return `${e.endereco}, ${e.numero}${complemento} - ${e.bairro}, ${e.cidade}/${e.estado} - CEP ${e.cep}`;
+}
+
 export function enderecoToForm(endereco?: EnderecoCliente): EnderecoFormValues {
   return {
     cep: endereco?.cep ?? "",

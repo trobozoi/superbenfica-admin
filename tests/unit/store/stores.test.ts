@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { useAuthStore } from "@/store/auth-store";
 import { resolveLojaId, useFilialStore } from "@/store/filial-store";
-import { useRealtimeStore } from "@/store/realtime-store";
+import { combineStatuses, useRealtimeStore } from "@/store/realtime-store";
 import { useUiStore } from "@/store/ui-store";
 import type { SessionUser } from "@/types/auth";
 
@@ -40,5 +40,13 @@ describe("stores", () => {
     useUiStore.getState().setMobileNavOpen(true);
     expect(useUiStore.getState().sidebarCollapsed).toBe(!before);
     expect(useUiStore.getState().mobileNavOpen).toBe(true);
+  });
+
+  it("com várias conexões, o indicador mostra a pior", () => {
+    expect(combineStatuses([])).toBe("idle");
+    expect(combineStatuses(["open", "open"])).toBe("open");
+    expect(combineStatuses(["open", "connecting"])).toBe("connecting");
+    expect(combineStatuses(["connecting", "reconnecting", "open"])).toBe("reconnecting");
+    expect(combineStatuses(["open", "forbidden", "closed"])).toBe("forbidden");
   });
 });
