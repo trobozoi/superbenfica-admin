@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, CheckCheck, PackageCheck, PlayCircle } from "lucide-react";
+import { Ban, CheckCheck, PackageCheck, PlayCircle, Truck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -13,6 +13,7 @@ import { usePedidoAction } from "../hooks";
 const ACTION_UI = {
   iniciarSeparacao: { icon: PlayCircle, labelKey: "pedidos.iniciarSeparacao", variant: "default" },
   concluirSeparacao: { icon: PackageCheck, labelKey: "separacao.concluir", variant: "default" },
+  despachar: { icon: Truck, labelKey: "pedidos.despachar", variant: "default" },
   finalizar: { icon: CheckCheck, labelKey: "pedidos.finalizar", variant: "default" },
   cancelar: { icon: Ban, labelKey: "pedidos.cancelar", variant: "outline" },
 } as const;

@@ -2,8 +2,9 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import { useLojas } from "@/components/layout/filial-selector";
 import { publicEnv } from "@/config/env";
 import { WS_CHANNELS } from "@/config/endpoints";
 import { REALTIME_INVALIDATIONS } from "@/lib/query-keys";
@@ -11,12 +12,13 @@ import { RealtimeClient } from "@/lib/realtime/realtime-client";
 import { authService } from "@/services/auth";
 import { useAuthStore } from "@/store/auth-store";
 import { resolveLojaId, useFilialStore } from "@/store/filial-store";
-import { useRealtimeStore } from "@/store/realtime-store";
-import type { RealtimeMessage } from "@/types/realtime";
+import { combineStatuses, useRealtimeStore } from "@/store/realtime-store";
+import type { ConnectionStatus, RealtimeMessage } from "@/types/realtime";
 
 /**
  * Mantém a conexão WebSocket com o canal da filial e traduz eventos em
  * invalidações do TanStack Query: as telas abertas se atualizam sozinhas.
+ * O ADMIN em "todas as filiais" escuta o canal de cada filial ativa.
  */
 export function RealtimeProvider({ children }: Readonly<{ children: ReactNode }>) {
   const queryClient = useQueryClient();
@@ -24,10 +26,22 @@ export function RealtimeProvider({ children }: Readonly<{ children: ReactNode }>
   const user = useAuthStore((state) => state.user);
   const selectedLojaId = useFilialStore((state) => state.selectedLojaId);
   const lojaId = resolveLojaId(user, selectedLojaId);
+  const todasAsFiliais = user?.role === "ADMIN" && lojaId === null;
+  const { data: lojas } = useLojas({ enabled: todasAsFiliais });
+  // Chave estável (string) para não reconectar a cada nova referência da lista.
+  const lojaIdsKey = useMemo(() => {
+    if (lojaId !== null) return String(lojaId);
+    if (!todasAsFiliais) return "";
+    return (lojas ?? [])
+      .filter((loja) => loja.ativa !== false)
+      .map((loja) => loja.id)
+      .join(",");
+  }, [lojaId, todasAsFiliais, lojas]);
 
   useEffect(() => {
     const { setStatus, markEvent } = useRealtimeStore.getState();
-    if (lojaId === null) {
+    const lojaIds = lojaIdsKey ? lojaIdsKey.split(",").map(Number) : [];
+    if (lojaIds.length === 0) {
       setStatus("idle");
       return undefined;
     }
@@ -58,15 +72,24 @@ export function RealtimeProvider({ children }: Readonly<{ children: ReactNode }>
       }
     };
 
-    const client = new RealtimeClient({
-      url: `${publicEnv.NEXT_PUBLIC_WS_URL}${WS_CHANNELS.loja(lojaId)}`,
-      getToken: () => authService.getRealtimeToken(),
-      onMessage: handleMessage,
-      onStatusChange: setStatus,
-    });
-    void client.connect();
-    return () => client.disconnect();
-  }, [lojaId, queryClient, t]);
+    const statuses = new Map<number, ConnectionStatus>();
+    const clients = lojaIds.map(
+      (id) =>
+        new RealtimeClient({
+          url: `${publicEnv.NEXT_PUBLIC_WS_URL}${WS_CHANNELS.loja(id)}`,
+          getToken: () => authService.getRealtimeToken(),
+          onMessage: handleMessage,
+          onStatusChange: (status) => {
+            statuses.set(id, status);
+            setStatus(combineStatuses([...statuses.values()]));
+          },
+        }),
+    );
+    for (const client of clients) void client.connect();
+    return () => {
+      for (const client of clients) client.disconnect();
+    };
+  }, [lojaIdsKey, queryClient, t]);
 
   return children;
 }

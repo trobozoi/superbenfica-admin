@@ -25,6 +25,7 @@ export const ENDPOINTS = {
   pedidos: "pedidos",
   pedidoCancelar: (id: number) => `pedidos/${id}/cancelar`,
   pedidoIniciarSeparacao: (id: number) => `pedidos/${id}/iniciar-separacao`,
+  pedidoDespachar: (id: number) => `pedidos/${id}/despachar`,
   pedidoFinalizar: (id: number) => `pedidos/${id}/finalizar`,
   separacoes: "separacoes",
   separacaoConcluir: (id: number) => `separacoes/${id}/concluir`,

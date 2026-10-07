@@ -1,19 +1,34 @@
 import { hasPermission } from "@/config/permissions";
 import type { ItemPedido, Pedido, PedidoStatus, Role, Separacao } from "@/types/api";
 
-export type PedidoAction = "iniciarSeparacao" | "concluirSeparacao" | "finalizar" | "cancelar";
+export type PedidoAction =
+  "iniciarSeparacao" | "concluirSeparacao" | "despachar" | "finalizar" | "cancelar";
 
 /** Espelho de TRANSICOES_PEDIDO (superbenfica-api/apps/pedidos/models.py). */
 const TRANSITIONS: Record<PedidoStatus, readonly PedidoStatus[]> = {
   PENDENTE: ["EM_SEPARACAO", "CANCELADO"],
   EM_SEPARACAO: ["SEPARADO", "CANCELADO"],
-  SEPARADO: ["FINALIZADO", "CANCELADO"],
+  SEPARADO: ["SAIU_PARA_ENTREGA", "FINALIZADO", "CANCELADO"],
+  SAIU_PARA_ENTREGA: ["FINALIZADO", "CANCELADO"],
   FINALIZADO: [],
   CANCELADO: [],
 };
 
 export function canTransition(from: PedidoStatus, to: PedidoStatus): boolean {
   return TRANSITIONS[from].includes(to);
+}
+
+/**
+ * Espelho de Pedido.pode_mudar_para: separado, o pedido de entrega em domicílio só sai
+ * para entrega, e o de retirada na loja só é finalizado.
+ */
+export function pedidoPodeMudarPara(
+  pedido: Pick<Pedido, "status" | "tipo_entrega">,
+  to: PedidoStatus,
+): boolean {
+  if (!canTransition(pedido.status, to)) return false;
+  if (pedido.status !== "SEPARADO" || to === "CANCELADO") return true;
+  return to === (pedido.tipo_entrega === "DOMICILIO" ? "SAIU_PARA_ENTREGA" : "FINALIZADO");
 }
 
 export function separacaoEmAndamento(pedido: Pick<Pedido, "separacoes">): Separacao | undefined {
@@ -29,25 +44,28 @@ export function concluirBloqueado(
 
 /** Ações que o perfil pode executar no estado atual do pedido (na ordem do fluxo). */
 export function availableActions(
-  pedido: Pick<Pedido, "status" | "separacoes">,
+  pedido: Pick<Pedido, "status" | "tipo_entrega" | "separacoes">,
   role: Role | null | undefined,
 ): PedidoAction[] {
   const actions: PedidoAction[] = [];
-  const { status } = pedido;
-  if (canTransition(status, "EM_SEPARACAO") && hasPermission(role, "separacao:operate")) {
+  const pode = (to: PedidoStatus) => pedidoPodeMudarPara(pedido, to);
+  if (pode("EM_SEPARACAO") && hasPermission(role, "separacao:operate")) {
     actions.push("iniciarSeparacao");
   }
   if (
-    canTransition(status, "SEPARADO") &&
+    pode("SEPARADO") &&
     separacaoEmAndamento(pedido) &&
     hasPermission(role, "separacao:operate")
   ) {
     actions.push("concluirSeparacao");
   }
-  if (canTransition(status, "FINALIZADO") && hasPermission(role, "pedidos:finalize")) {
+  if (pode("SAIU_PARA_ENTREGA") && hasPermission(role, "pedidos:finalize")) {
+    actions.push("despachar");
+  }
+  if (pode("FINALIZADO") && hasPermission(role, "pedidos:finalize")) {
     actions.push("finalizar");
   }
-  if (canTransition(status, "CANCELADO") && hasPermission(role, "pedidos:cancel")) {
+  if (pode("CANCELADO") && hasPermission(role, "pedidos:cancel")) {
     actions.push("cancelar");
   }
   return actions;

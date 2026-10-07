@@ -86,8 +86,13 @@
     "PENDENTE": "Pendente",
     "EM_SEPARACAO": "Em separação",
     "SEPARADO": "Separado",
+    "SAIU_PARA_ENTREGA": "Saiu para entrega",
     "FINALIZADO": "Finalizado",
     "CANCELADO": "Cancelado"
+  },
+  "tipoEntrega": {
+    "RETIRADA": "Retirada na loja",
+    "DOMICILIO": "Entrega em domicílio"
   },
   "separacaoStatus": {
     "EM_ANDAMENTO": "Em andamento",
@@ -162,6 +167,7 @@
     "aguardandoSeparacao": "Aguardando separação",
     "emSeparacao": "Em separação",
     "prontosParaCaixa": "Prontos para o caixa",
+    "saiuParaEntrega": "Saíram para entrega",
     "goToQueue": "Abrir fila",
     "last30Days": "Últimos 30 dias",
     "unidades": "{count} un."
@@ -243,6 +249,7 @@
     "addItem": "Adicionar item",
     "removeItem": "Remover item",
     "iniciarSeparacao": "Iniciar separação",
+    "despachar": "Saiu para entrega",
     "finalizar": "Finalizar",
     "cancelar": "Cancelar pedido",
     "confirmCancel": "Cancelar o pedido {codigo}?",
@@ -256,7 +263,13 @@
     "selectProduto": "Selecione o produto",
     "clienteNaoEncontrado": "Nenhum cliente encontrado.",
     "produtoNaoEncontrado": "Nenhum produto ativo encontrado.",
-    "itemSeparado": "Separado:"
+    "itemSeparado": "Separado:",
+    "entrega": "Entrega",
+    "enderecoEntrega": "Endereço de entrega",
+    "selectEndereco": "Selecione o endereço",
+    "selectClientePrimeiro": "Escolha o cliente para ver os endereços.",
+    "clienteSemEndereco": "Este cliente não tem endereço cadastrado. Cadastre em Clientes.",
+    "enderecoPrincipal": "principal"
   },
   "separacao": {
     "title": "Fila de separação",

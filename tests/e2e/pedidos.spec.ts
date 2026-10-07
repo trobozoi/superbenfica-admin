@@ -60,3 +60,67 @@ test.describe("Novo pedido com busca dentro da lista", () => {
     });
   });
 });
+
+test.describe("Forma de entrega do pedido", () => {
+  const ENDERECO = "Rua São José, 100 (Apto 2) - Centro, Fortaleza/CE - CEP 60060-170";
+  const pedidoEntrega = {
+    id: 9001,
+    codigo: "PED-E2EENTRG",
+    cliente: 1,
+    cliente_nome: "Cliente Entrega",
+    loja: 1,
+    loja_nome: "Super Benfica Centro",
+    status: "PENDENTE",
+    forma_pagamento: 1,
+    forma_pagamento_nome: "Pix",
+    tipo_entrega: "DOMICILIO",
+    endereco_entrega: ENDERECO,
+    observacao: "",
+    itens: [
+      {
+        id: 1,
+        produto: 1,
+        produto_nome: "Leite integral UHT 1L",
+        produto_sku: "LAT-0001",
+        produto_codigo_barras: "",
+        quantidade: 2,
+        preco_unitario: "5.49",
+        subtotal: "10.98",
+        separado: false,
+      },
+    ],
+    total: "10.98",
+    separacoes: [],
+    data_criacao: "2026-10-06T10:00:00-03:00",
+    data_atualizacao: "2026-10-06T10:00:00-03:00",
+  };
+
+  test("lista, filtra e detalha um pedido com entrega em domicílio", async ({ page }) => {
+    // Pedido simulado: não depende de existir um pedido de entrega no banco real.
+    const filtros: (string | null)[] = [];
+    await page.route("**/api/proxy/pedidos?*", async (route) => {
+      filtros.push(new URL(route.request().url()).searchParams.get("tipo_entrega"));
+      return route.fulfill({
+        json: { count: 1, next: null, previous: null, results: [pedidoEntrega] },
+      });
+    });
+    await page.route("**/api/proxy/pedidos/9001", (route) =>
+      route.fulfill({ json: pedidoEntrega }),
+    );
+
+    await loginAndWait(page, credentials.seed(SEED_USERS.gerente));
+    await page.goto("/pedidos");
+    const linha = page.getByRole("row", { name: /PED-E2EENTRG/ });
+    await expect(linha.getByText("Entrega em domicílio")).toBeVisible();
+
+    await page
+      .getByLabel("Entrega", { exact: true })
+      .selectOption({ label: "Entrega em domicílio" });
+    await expect.poll(() => filtros.at(-1)).toBe("DOMICILIO");
+
+    await linha.getByRole("button", { name: "Detalhes PED-E2EENTRG" }).click();
+    const dialog = page.getByRole("dialog", { name: "PED-E2EENTRG" });
+    await expect(dialog.getByText("Entrega em domicílio")).toBeVisible();
+    await expect(dialog.getByText(ENDERECO)).toBeVisible();
+  });
+});

@@ -9,8 +9,9 @@ import { useAuthStore } from "@/store/auth-store";
 import { useFilialStore } from "@/store/filial-store";
 
 /** Lista de filiais (cacheada por 5 min: muda raramente). */
-export function useLojas() {
+export function useLojas({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
+    enabled,
     queryKey: queryKeys.list(lojasApi.name, { page: 1 }),
     queryFn: () => lojasApi.list({ page: 1 }),
     staleTime: 5 * 60_000,

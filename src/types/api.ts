@@ -22,6 +22,7 @@ export const PEDIDO_STATUS = [
   "PENDENTE",
   "EM_SEPARACAO",
   "SEPARADO",
+  "SAIU_PARA_ENTREGA",
   "FINALIZADO",
   "CANCELADO",
 ] as const;
@@ -205,6 +206,10 @@ export interface Separacao {
   data_conclusao: string | null;
 }
 
+/** Espelho de TipoEntrega (superbenfica-api/apps/pedidos/models.py). */
+export const TIPOS_ENTREGA = ["RETIRADA", "DOMICILIO"] as const;
+export type TipoEntrega = (typeof TIPOS_ENTREGA)[number];
+
 export interface Pedido {
   id: number;
   codigo: string;
@@ -216,6 +221,9 @@ export interface Pedido {
   /** Null só em pedidos anteriores ao cadastro de formas de pagamento. */
   forma_pagamento: number | null;
   forma_pagamento_nome: string | null;
+  tipo_entrega: TipoEntrega;
+  /** Cópia do endereço no momento da compra (vazio na retirada). */
+  endereco_entrega: string;
   observacao: string;
   itens: ItemPedido[];
   total: string;
@@ -257,6 +265,9 @@ export interface PedidoInput {
   forma_pagamento: number;
   itens: { produto: number; quantidade: number }[];
   observacao?: string;
+  tipo_entrega?: TipoEntrega;
+  /** Id de um endereço do cliente; obrigatório na entrega em domicílio. */
+  endereco?: number;
 }
 
 export interface VendasLoja {

@@ -67,6 +67,8 @@ export const pedidosApi = {
   /** Responde com a Separacao criada (201), não com o pedido. */
   iniciarSeparacao: async (id: number) =>
     (await http.post<Separacao>(ENDPOINTS.pedidoIniciarSeparacao(id))).data,
+  /** Entrega em domicílio: o pedido separado sai para entrega. */
+  despachar: (id: number) => postPedidoAction(ENDPOINTS.pedidoDespachar(id)),
   finalizar: (id: number) => postPedidoAction(ENDPOINTS.pedidoFinalizar(id)),
 };
 

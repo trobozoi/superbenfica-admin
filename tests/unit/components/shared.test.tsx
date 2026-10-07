@@ -5,6 +5,7 @@ import {
   ActiveBadge,
   PedidoStatusBadge,
   SeparacaoStatusBadge,
+  TipoEntregaBadge,
 } from "@/components/shared/status-badge";
 import { useAuthStore } from "@/store/auth-store";
 import { renderWithIntl } from "../../helpers";
@@ -34,11 +35,15 @@ describe("componentes compartilhados", () => {
         <SeparacaoStatusBadge status="CONCLUIDA" />
         <ActiveBadge active={false} />
         <ActiveBadge active />
+        <TipoEntregaBadge tipo="DOMICILIO" />
+        <TipoEntregaBadge tipo="RETIRADA" />
       </>,
     );
     expect(screen.getByText("Em separação")).toBeInTheDocument();
     expect(screen.getByText("Concluída")).toBeInTheDocument();
     expect(screen.getByText("Inativo")).toBeInTheDocument();
     expect(screen.getByText("Ativo")).toBeInTheDocument();
+    expect(screen.getByText("Entrega em domicílio")).toBeInTheDocument();
+    expect(screen.getByText("Retirada na loja")).toBeInTheDocument();
   });
 });

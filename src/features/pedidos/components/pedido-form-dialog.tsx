@@ -23,6 +23,7 @@ import { formatCurrency } from "@/lib/format";
 import { REALTIME_INVALIDATIONS } from "@/lib/query-keys";
 import { clientesApi, pedidosApi, produtosApi } from "@/services/api";
 import { useAuthStore } from "@/store/auth-store";
+import { EntregaFields } from "./entrega-fields";
 import { FormaPagamentoField } from "./forma-pagamento-field";
 import { type PedidoFormInput, type PedidoFormValues, pedidoSchema } from "../schemas";
 
@@ -44,6 +45,8 @@ export function PedidoFormDialog({ open, onOpenChange }: Readonly<PedidoFormDial
     forma_pagamento: "",
     itens: [{ ...NEW_ITEM }],
     observacao: "",
+    tipo_entrega: "RETIRADA",
+    endereco: "",
   };
   const {
     control,
@@ -51,6 +54,7 @@ export function PedidoFormDialog({ open, onOpenChange }: Readonly<PedidoFormDial
     handleSubmit,
     reset,
     setError,
+    setValue,
     formState: { errors },
   } = useForm<PedidoFormInput, unknown, PedidoFormValues>({
     resolver: zodResolver(pedidoSchema),
@@ -66,6 +70,8 @@ export function PedidoFormDialog({ open, onOpenChange }: Readonly<PedidoFormDial
         forma_pagamento: "",
         itens: [{ ...NEW_ITEM }],
         observacao: "",
+        tipo_entrega: "RETIRADA",
+        endereco: "",
       });
   }, [open, lojaPadrao, reset]);
 
@@ -114,6 +120,15 @@ export function PedidoFormDialog({ open, onOpenChange }: Readonly<PedidoFormDial
               disabled={!isAdmin}
             />
           </div>
+
+          <EntregaFields
+            control={control}
+            setValue={setValue}
+            errors={{
+              tipo_entrega: errors.tipo_entrega?.message,
+              endereco: errors.endereco?.message,
+            }}
+          />
 
           <fieldset className="grid gap-3">
             <legend className="mb-2 text-sm font-medium">{t("pedidos.itens")}</legend>

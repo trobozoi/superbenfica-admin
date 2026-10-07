@@ -37,6 +37,8 @@ describe("schemas de formulário", () => {
       forma_pagamento: "3",
       itens: [{ produto: "5", quantidade: "2" }],
       observacao: "",
+      tipo_entrega: "RETIRADA",
+      endereco: "",
     });
     expect(ok).toEqual({
       cliente: 1,
@@ -44,8 +46,16 @@ describe("schemas de formulário", () => {
       forma_pagamento: 3,
       itens: [{ produto: 5, quantidade: 2 }],
       observacao: "",
+      tipo_entrega: "RETIRADA",
     });
-    const base = { cliente: 1, loja: 1, forma_pagamento: 1, observacao: "" };
+    const base = {
+      cliente: 1,
+      loja: 1,
+      forma_pagamento: 1,
+      observacao: "",
+      tipo_entrega: "RETIRADA",
+      endereco: "",
+    } as const;
     expect(firstError(pedidoSchema.safeParse({ ...base, itens: [] }))).toBe("minItems");
     const semForma = pedidoSchema.safeParse({
       ...base,
@@ -56,6 +66,29 @@ describe("schemas de formulário", () => {
       path: ["forma_pagamento"],
       message: "required",
     });
+  });
+
+  it("pedido de entrega em domicílio exige um endereço do cliente", () => {
+    const base = {
+      cliente: 1,
+      loja: 1,
+      forma_pagamento: 1,
+      itens: [{ produto: 5, quantidade: 1 }],
+      observacao: "",
+      tipo_entrega: "DOMICILIO",
+    } as const;
+    expect(pedidoSchema.safeParse({ ...base, endereco: "" }).error?.issues[0]).toMatchObject({
+      path: ["endereco"],
+      message: "required",
+    });
+    expect(pedidoSchema.parse({ ...base, endereco: "7" })).toMatchObject({
+      tipo_entrega: "DOMICILIO",
+      endereco: 7,
+    });
+    // Na retirada, um endereço que tenha ficado no formulário não vai para a API.
+    expect(
+      pedidoSchema.parse({ ...base, tipo_entrega: "RETIRADA", endereco: 7 }),
+    ).not.toHaveProperty("endereco");
   });
 
   it("cliente converte filial vazia em null", () => {
