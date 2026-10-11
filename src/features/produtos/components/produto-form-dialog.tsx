@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { type KeyboardEvent, useEffect, useState } from "react";
+import { type KeyboardEvent, useCallback, useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useLojas } from "@/components/layout/filial-selector";
@@ -30,7 +30,10 @@ import {
   ProdutoParcialError,
   salvarProduto,
 } from "../estoque";
+import type { ProdutoEncontrado } from "../busca-gtin";
 import { type ProdutoFormInput, type ProdutoFormValues, produtoFormSchema } from "../schemas";
+import { type BuscaGtinState, useBuscaGtin } from "../use-busca-gtin";
+import { CodigoBarrasInput } from "./codigo-barras-input";
 import { EstoqueFields } from "./estoque-fields";
 import { FotoField } from "./foto-field";
 
@@ -57,6 +60,24 @@ function toFormValues(produto?: Produto | null): ProdutoFormInput {
 /** O leitor de código de barras "digita" o código e tecla Enter: não pode enviar o formulário. */
 function ignorarEnterDoLeitor(event: KeyboardEvent<HTMLInputElement>) {
   if (event.key === "Enter") event.preventDefault();
+}
+
+/** Mensagem (chave em "produtos") abaixo do código de barras, conforme a busca. */
+function buscaHint(state: BuscaGtinState) {
+  switch (state.status) {
+    case "idle":
+      return "codigoBarrasDica";
+    case "invalid":
+      return "buscaGtinInvalido";
+    case "loading":
+      return "buscaGtinLoading";
+    case "found":
+      return state.preencheu ? "buscaGtinFound" : "buscaGtinMantido";
+    case "not_found":
+      return "buscaGtinNotFound";
+    case "error":
+      return "buscaGtinError";
+  }
 }
 
 /** Linhas de estoque por filial: filiais visíveis + estoques já existentes do produto. */
@@ -96,6 +117,8 @@ export function ProdutoFormDialog({
     handleSubmit,
     reset,
     setError,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm<ProdutoFormInput, unknown, ProdutoFormValues>({
     resolver: zodResolver(produtoFormSchema),
@@ -103,6 +126,26 @@ export function ProdutoFormDialog({
   });
   const { fields, replace } = useFieldArray({ control, name: "estoques" });
   const { rows, isLoading } = useEstoqueRows(open, current?.id);
+
+  // O código de barras preenche nome e foto, mas só se ainda estiverem vazios. Na edição,
+  // a foto só entra se o produto ainda não tiver uma salva.
+  const preencher = useCallback(
+    (encontrado: ProdutoEncontrado) => {
+      let preencheu = false;
+      if (encontrado.nome && !getValues("nome").trim()) {
+        setValue("nome", encontrado.nome, { shouldValidate: true, shouldDirty: true });
+        preencheu = true;
+      }
+      if (encontrado.foto && foto === undefined && !current?.foto) {
+        setFoto(encontrado.foto);
+        preencheu = true;
+      }
+      return preencheu;
+    },
+    [current?.foto, foto, getValues, setValue],
+  );
+  const busca = useBuscaGtin(preencher);
+  const codigoField = register("codigo_barras");
 
   useEffect(() => {
     if (open) reset(toFormValues(produto));
@@ -118,6 +161,7 @@ export function ProdutoFormDialog({
     if (!next) {
       setSavedProduto(null);
       setFoto(undefined);
+      busca.reset();
     }
     onOpenChange(next);
   };
@@ -170,15 +214,25 @@ export function ProdutoFormDialog({
             <FormField
               label={t("produtos.codigoBarras")}
               error={errors.codigo_barras?.message}
-              hint={t("produtos.codigoBarrasDica")}
+              hint={t(`produtos.${buscaHint(busca.state)}`)}
             >
-              <Input
+              <CodigoBarrasInput
                 inputMode="numeric"
                 autoComplete="off"
                 maxLength={14}
                 className="font-mono"
-                onKeyDown={ignorarEnterDoLeitor}
-                {...register("codigo_barras")}
+                {...codigoField}
+                onChange={(event) => {
+                  void codigoField.onChange(event);
+                  busca.onCodigoChange(event.target.value);
+                }}
+                onKeyDown={(event) => {
+                  ignorarEnterDoLeitor(event);
+                  if (event.key === "Enter") busca.onCodigoChange(event.currentTarget.value, true);
+                }}
+                onBuscar={() => busca.buscarAgora(getValues("codigo_barras") ?? "")}
+                buscando={busca.state.status === "loading"}
+                buscarLabel={t("produtos.buscaGtinBotao")}
               />
             </FormField>
           </div>

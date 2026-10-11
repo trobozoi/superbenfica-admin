@@ -47,6 +47,25 @@ export const VIACEP = {
   url: (cep: string) => `https://viacep.com.br/ws/${cep}/json/`,
 } as const;
 
+/**
+ * Open Food Facts: base pública de produtos por código de barras, chamada direto do
+ * navegador (libera CORS). A origem também entra na CSP (connect-src) em src/proxy.ts.
+ */
+export const OPEN_FOOD_FACTS = {
+  origin: "https://world.openfoodfacts.org",
+  url: (gtin: string) =>
+    `https://world.openfoodfacts.org/api/v2/product/${gtin}.json?fields=product_name,product_name_pt,quantity`,
+} as const;
+
+/**
+ * CDN de imagens do Cosmos (Bluesoft). Não libera CORS: o navegador baixa a foto pelo
+ * BFF (BFF_ROUTES.gtinFoto). A página do produto no Cosmos fica atrás do Cloudflare
+ * e não pode ser lida pelo servidor; por isso o nome vem do Open Food Facts.
+ */
+export const COSMOS_CDN = {
+  fotoUrl: (gtin: string) => `https://cdn-cosmos.bluesoft.com.br/products/${gtin}`,
+} as const;
+
 /** Canais WebSocket (Django Channels). */
 export const WS_CHANNELS = {
   loja: (lojaId: number) => `/ws/lojas/${lojaId}/`,
@@ -62,6 +81,8 @@ export const BFF_ROUTES = {
   wsToken: "/api/auth/ws-token",
   /** Fotos servidas pela mesma origem do painel (veja app/api/media). */
   media: "/api/media",
+  /** Foto do produto no Cosmos pelo código de barras (veja app/api/gtin). */
+  gtinFoto: (gtin: string) => `/api/gtin/${gtin}/foto`,
 } as const;
 
 /** Tamanho de página fixo da API (REST_FRAMEWORK.PAGE_SIZE). */

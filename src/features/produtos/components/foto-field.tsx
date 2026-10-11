@@ -2,7 +2,7 @@
 
 import { ImageOff, ImagePlus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type ChangeEvent, useEffect, useId, useRef, useState } from "react";
+import { type ChangeEvent, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { mediaSrc } from "@/lib/media";
 import { FOTO_TIPOS, type FotoErro, validarFoto } from "../foto";
@@ -20,10 +20,14 @@ export function FotoField({ atual, value, onChange }: Readonly<FotoFieldProps>) 
   const t = useTranslations("produtos");
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(null);
   const [erro, setErro] = useState<FotoErro | null>(null);
 
-  // Libera a URL temporária da pré-visualização quando ela muda ou o campo sai da tela.
+  // A pré-visualização segue o arquivo escolhido, inclusive o que veio da busca pelo
+  // código de barras. A URL temporária é liberada quando ele muda ou o campo sai da tela.
+  const preview = useMemo(
+    () => (value instanceof File ? URL.createObjectURL(value) : null),
+    [value],
+  );
   useEffect(
     () => () => {
       if (preview) URL.revokeObjectURL(preview);
@@ -41,13 +45,11 @@ export function FotoField({ atual, value, onChange }: Readonly<FotoFieldProps>) 
     const problema = validarFoto(file);
     setErro(problema);
     if (problema) return;
-    setPreview(URL.createObjectURL(file));
     onChange(file);
   };
 
   const handleRemove = () => {
     setErro(null);
-    setPreview(null);
     // Sem foto salva, remover só descarta a escolha; com foto salva, apaga na API.
     onChange(atual ? null : undefined);
   };

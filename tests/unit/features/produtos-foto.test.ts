@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FOTO_MAX_BYTES, validarFoto } from "@/features/produtos/foto";
+import { FOTO_MAX_BYTES, tipoPelaAssinatura, validarFoto } from "@/features/produtos/foto";
 import { mediaSrc } from "@/lib/media";
 import { produtosApi } from "@/services/api";
 import { http } from "@/services/http/client";
@@ -53,5 +53,27 @@ describe("produtosApi: foto", () => {
 
     await produtosApi.removerFoto(1);
     expect(del).toHaveBeenCalledWith("produtos/1/foto");
+  });
+});
+
+describe("tipoPelaAssinatura", () => {
+  const bytes = (...valores: number[]) => new Uint8Array(valores);
+  const ascii = (texto: string) => [...texto].map((letra) => letra.charCodeAt(0));
+
+  it("reconhece JPEG, PNG e WebP pelos primeiros bytes", () => {
+    expect(tipoPelaAssinatura(bytes(0xff, 0xd8, 0xff, 0xe0))).toBe("image/jpeg");
+    expect(tipoPelaAssinatura(bytes(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0))).toBe(
+      "image/png",
+    );
+    expect(tipoPelaAssinatura(bytes(...ascii("RIFF"), 1, 2, 3, 4, ...ascii("WEBP")))).toBe(
+      "image/webp",
+    );
+  });
+
+  it("recusa o que não é imagem aceita", () => {
+    expect(tipoPelaAssinatura(bytes(...ascii("<!DOCTYPE html>")))).toBeNull();
+    expect(tipoPelaAssinatura(bytes(...ascii("GIF89a")))).toBeNull();
+    expect(tipoPelaAssinatura(bytes(...ascii("RIFF"), 1, 2, 3, 4, ...ascii("WAVE")))).toBeNull();
+    expect(tipoPelaAssinatura(bytes())).toBeNull();
   });
 });
