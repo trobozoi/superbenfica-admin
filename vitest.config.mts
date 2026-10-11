@@ -23,7 +23,7 @@ export default defineConfig({
         "src/lib/**/*.ts",
         "src/services/**/*.ts",
         "src/store/**/*.ts",
-        "src/features/**/{schemas,actions,csv,summary,service,estoque,foto}.ts",
+        "src/features/**/{schemas,actions,csv,summary,service,estoque,foto,busca-gtin,use-busca-gtin}.ts",
       ],
       exclude: ["src/**/*.d.ts", "src/lib/server/**"],
       thresholds: { lines: 80, functions: 80, branches: 75, statements: 80 },
