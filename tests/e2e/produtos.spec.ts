@@ -22,10 +22,37 @@ async function captureSaves(page: Page) {
   return sent;
 }
 
-async function openNovoProduto(page: Page) {
+// PNG 1x1 transparente.
+const PNG_1X1 = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+  "base64",
+);
+
+/**
+ * Simula a busca pelo código de barras (Open Food Facts e foto do Cosmos) para o teste
+ * não depender da internet. Sem argumentos, o produto não é encontrado.
+ */
+async function mockBuscaGtin(page: Page, encontrado?: { nome: string; foto: boolean }) {
+  await page.route("https://world.openfoodfacts.org/**", (route) =>
+    encontrado
+      ? route.fulfill({ json: { status: 1, product: { product_name_pt: encontrado.nome } } })
+      : route.fulfill({ status: 404, json: { status: 0 } }),
+  );
+  await page.route("**/api/gtin/*/foto", (route) =>
+    encontrado?.foto
+      ? route.fulfill({ contentType: "image/png", body: PNG_1X1 })
+      : route.fulfill({ status: 404 }),
+  );
+}
+
+async function abrirNovoProduto(page: Page) {
   await page.goto("/produtos");
   await page.getByRole("button", { name: "Novo produto" }).click();
-  const dialog = page.getByRole("dialog", { name: "Novo produto" });
+  return page.getByRole("dialog", { name: "Novo produto" });
+}
+
+async function openNovoProduto(page: Page) {
+  const dialog = await abrirNovoProduto(page);
   await dialog.getByLabel("Nome").fill("Produto E2E");
   await dialog.getByLabel("SKU").fill("E2E-001");
   await dialog.getByLabel("Preço").fill("9,90");
@@ -67,6 +94,7 @@ test.describe("Cadastro de produto com estoque mínimo por filial", () => {
     page,
   }) => {
     await loginAndWait(page, credentials.seed(SEED_USERS.gerente));
+    await mockBuscaGtin(page);
     const dialog = await openNovoProduto(page);
     const sent = await captureSaves(page);
     const codigo = dialog.getByLabel("Código de barras");
@@ -85,6 +113,47 @@ test.describe("Cadastro de produto com estoque mínimo por filial", () => {
     await dialog.getByRole("button", { name: "Salvar" }).click();
     await expect(dialog).toBeHidden();
     expect(sent.produto).toMatchObject({ sku: "E2E-001", codigo_barras: "7891000315507" });
+  });
+
+  test("código de barras preenche nome e foto, sem apagar o que já foi digitado", async ({
+    page,
+  }) => {
+    await loginAndWait(page, credentials.seed(SEED_USERS.gerente));
+    await mockBuscaGtin(page, { nome: "Leite Condensado Moça 395 g", foto: true });
+    const dialog = await abrirNovoProduto(page);
+    const nome = dialog.getByLabel("Nome");
+    const codigo = dialog.getByLabel("Código de barras");
+
+    await codigo.fill("7891000100103");
+    await expect(nome).toHaveValue("Leite Condensado Moça 395 g");
+    await expect(dialog.getByRole("img", { name: "Foto do produto" })).toBeVisible();
+    await expect(dialog.getByText(/Nome e foto preenchidos pelo código de barras/)).toBeVisible();
+
+    // Outro código não troca o nome nem a foto que já estão no formulário.
+    await nome.fill("Nome digitado");
+    await codigo.fill("7891000315507");
+    await codigo.press("Enter");
+    await expect(dialog.getByText(/Nome e foto já preenchidos foram mantidos/)).toBeVisible();
+    await expect(nome).toHaveValue("Nome digitado");
+  });
+
+  test("na edição, o botão Buscar consulta o código sem trocar o nome salvo", async ({ page }) => {
+    await loginAndWait(page, credentials.seed(SEED_USERS.gerente));
+    await mockBuscaGtin(page, { nome: "Nome vindo da busca", foto: true });
+    await page.goto("/produtos");
+    await page
+      .getByRole("button", { name: /^Editar/ })
+      .first()
+      .click();
+    const dialog = page.getByRole("dialog", { name: "Editar produto" });
+    const nome = dialog.getByLabel("Nome");
+    await expect(nome).not.toHaveValue("");
+    const nomeSalvo = await nome.inputValue();
+
+    await dialog.getByLabel("Código de barras").fill("7891000100103");
+    await dialog.getByRole("button", { name: "Buscar na internet" }).click();
+    await expect(dialog.getByText(/Produto encontrado|preenchidos pelo código/)).toBeVisible();
+    await expect(nome).toHaveValue(nomeSalvo);
   });
 
   test("na edição mostra o saldo atual e permite mudar só o mínimo", async ({ page }) => {

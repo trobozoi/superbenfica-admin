@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { isProduction, publicEnv } from "@/config/env";
-import { VIACEP } from "@/config/endpoints";
+import { OPEN_FOOD_FACTS, VIACEP } from "@/config/endpoints";
 import { canAccessPath } from "@/config/permissions";
 import { isExpired, sessionFromAccessToken } from "@/lib/auth/session";
 import {
@@ -37,7 +37,7 @@ function buildCsp(nonce: string): string {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data:",
     "font-src 'self'",
-    `connect-src 'self' ${wsOrigin} ${VIACEP.origin}${devWs}`,
+    `connect-src 'self' ${wsOrigin} ${VIACEP.origin} ${OPEN_FOOD_FACTS.origin}${devWs}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

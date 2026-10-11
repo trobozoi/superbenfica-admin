@@ -12,6 +12,7 @@ Todas as mudanças relevantes do painel são registradas aqui. O formato segue o
   - selo e endereço nos cartões da fila de separação quando o pedido é para entrega;
   - no novo pedido, escolha entre retirada e entrega em domicílio; na entrega, o endereço é escolhido entre os cadastrados do cliente (o principal vem selecionado).
 - **Status "Saiu para entrega"** (requer a API com o status `SAIU_PARA_ENTREGA`, migração `pedidos.0006`): pedidos de entrega em domicílio separados ganham o botão "Saiu para entrega" e só são finalizados depois dele; a retirada na loja continua sendo finalizada direto. O status entra no filtro, no gráfico e nos pedidos em aberto, e o dashboard operacional ganha o cartão "Saíram para entrega".
+- **Nome e foto do produto pelo código de barras:** no cadastro e na edição, ao digitar ou ler um código válido (ou pelo botão "Buscar na internet" ao lado do campo), o nome vem do [Open Food Facts](https://world.openfoodfacts.org) e a foto do CDN do [Cosmos](https://cosmos.bluesoft.com.br). Só preenche nome e foto que ainda estejam vazios; na edição, a foto só entra se o produto ainda não tiver uma. A foto passa pela rota `/api/gtin/{código}/foto` (o CDN não libera CORS) e fica só em memória até o produto ser salvo. A página do produto no Cosmos fica atrás do Cloudflare e não pode ser lida pelo servidor, por isso o nome vem do Open Food Facts.
 
 ### Corrigido
 
